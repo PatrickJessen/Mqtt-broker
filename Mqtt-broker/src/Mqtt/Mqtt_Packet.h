@@ -35,51 +35,25 @@ struct FixedHeader {
     uint8_t flags : 4;
 };
 
-struct ConnectPacket {
-    uint8_t fixedHeader;
-    uint8_t remainingLength;
+struct SubscriptionOptions {
+    std::string topic;
+    uint8_t qosLevel;
+};
+
+struct ConnectOptions {
+    uint8_t packetType;
     uint8_t protocolNameLength;
     std::string protocolName;
     uint8_t protocolLevel;
     uint8_t connectFlags;
     uint16_t keepAlive;
-    uint16_t clientIdLength;
     std::string clientId;
+    std::string willTopic;
+    std::string willMessage;
     std::string username;
     std::string password;
-    std::string will;
-
-    // Constructor to initialize the fields
-    ConnectPacket(const std::string& protoName, const std::string& clientID, uint16_t keepAliveSecs)
-        : fixedHeader(static_cast<uint8_t>(PacketType::CONNECT) << 4),
-        protocolNameLength(static_cast<uint8_t>(strlen(protoName.c_str()))),
-        protocolName(protoName),
-        protocolLevel(4),  // MQTT protocol version 3.1.1
-        connectFlags(0),
-        keepAlive(keepAliveSecs),
-        clientIdLength(static_cast<uint16_t>(strlen(clientID.c_str()))),
-        clientId(clientID)
-    {
-        // Set CONNECT flags as needed
-        connectFlags |= CLEAN_SESSION;
-        // ... set other connect flags
-    }
-
-    // Function to encode the CONNECT packet
-    void encode(char* buffer) const {
-        buffer[0] = fixedHeader;
-        buffer[1] = remainingLength;
-        buffer[2] = protocolNameLength;
-        std::memcpy(buffer + 3, protocolName.c_str(), protocolNameLength);
-        buffer[3 + protocolNameLength] = protocolLevel;
-        buffer[4 + protocolNameLength] = connectFlags;
-        std::memcpy(buffer + 5 + protocolNameLength, &keepAlive, 2);
-        buffer[7 + protocolNameLength] = clientIdLength >> 8;
-        buffer[8 + protocolNameLength] = clientIdLength & 0xFF;
-        std::memcpy(buffer + 9 + protocolNameLength, clientId.c_str(), clientIdLength);
-        // ... encode additional fields
-    }
 };
+
 
 // MQTT Publish Packet
 struct PublishPacket {

@@ -18,13 +18,10 @@
     <ClCompile Include="src\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Mqtt\Mqtt_Broker.h">
+    <ClCompile Include="src\Mqtt\MqttServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Mqtt\MqttBrokerSession.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Mqtt\Mqtt_Broker.cpp">
+    <ClCompile Include="src\Mqtt\MqttClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,7 +35,13 @@
     <ClInclude Include="src\Mqtt\Mqtt_Packet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Mqtt\MqttBrokerSession.h">
+    <ClInclude Include="src\Mqtt\MqttConnectParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mqtt\MqttClient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mqtt\MqttServer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
