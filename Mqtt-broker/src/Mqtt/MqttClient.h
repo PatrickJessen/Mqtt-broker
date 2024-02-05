@@ -18,16 +18,16 @@ public:
         return socket_;
     }
 
-    const std::unordered_set<std::string>& subscribedTopics() const {
+    const std::vector<SubscriptionOptions>& subscribedTopics() const {
         return subscribedTopics_;
     }
 
-    void subscribe(const std::string& topic) {
-        subscribedTopics_.insert(topic);
+    void subscribe(const SubscriptionOptions& topic) {
+        subscribedTopics_.push_back(topic);
     }
 
-    void unsubscribe(const std::string& topic) {
-        subscribedTopics_.erase(topic);
+    void unsubscribe(const SubscriptionOptions& topic) {
+        //subscribedTopics_.erase(topic);
     }
 
     std::vector<char>& payload() {
@@ -45,7 +45,7 @@ public:
     std::vector<char> payload_;
 private:
     boost::asio::ip::tcp::socket socket_;
-    std::unordered_set<std::string> subscribedTopics_;
+    std::vector<SubscriptionOptions> subscribedTopics_;
     std::vector<char> header_;
     std::size_t payload_length_;
     int sessionId_;

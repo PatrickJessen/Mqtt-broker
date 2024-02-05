@@ -137,7 +137,7 @@
     <ClInclude Include="src\interfaces\IServer.h" />
     <ClInclude Include="src\interfaces\ISession.h" />
     <ClInclude Include="src\Mqtt\MqttClient.h" />
-    <ClInclude Include="src\Mqtt\MqttConnectParser.h" />
+    <ClInclude Include="src\Mqtt\MqttParser.h" />
     <ClInclude Include="src\Mqtt\MqttServer.h" />
     <ClInclude Include="src\Mqtt\Mqtt_Packet.h" />
   </ItemGroup>

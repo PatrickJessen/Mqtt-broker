@@ -18,11 +18,13 @@ private:
 
     void sendSuback(std::shared_ptr<MqttClient> client);
 
+    void sendConnack(std::shared_ptr<MqttClient> client);
+
     void readPayload(std::shared_ptr<MqttClient> client);
 
     void handleMqttMessage(std::shared_ptr<MqttClient> client, const std::string& message);
 
-    void handleMqttPublish(std::shared_ptr<MqttClient> sender, const std::string& publishMessage);
+    void handleMqttPublish(std::shared_ptr<MqttClient> sender, const std::string& topic, const std::string& publishMessage);
 
     void handleClientDisconnect(std::shared_ptr<MqttClient> client);
 
@@ -35,6 +37,8 @@ private:
     boost::asio::ip::tcp::socket socket_;
     std::unordered_set<std::shared_ptr<MqttClient>> clients_;
     PacketType type;
-    ConnectOptions* packet = nullptr;
+    ConnectOptions connectPacket;
+    SubscriptionOptions subscribePacket;
+    PublishPacket publishPacket;
     int nextId = 0;
 };

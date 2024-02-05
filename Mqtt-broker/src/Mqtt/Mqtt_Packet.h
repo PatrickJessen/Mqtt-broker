@@ -29,6 +29,12 @@ enum ConnectFlags : uint8_t {
     USERNAME_FLAG = 128
 };
 
+enum class QoSType {
+    QOS0 = 0,
+    QOS1 = 1,
+    QOS2 = 2
+};
+
 // MQTT Fixed Header
 struct FixedHeader {
     uint8_t controlPacketType : 4;
@@ -37,7 +43,7 @@ struct FixedHeader {
 
 struct SubscriptionOptions {
     std::string topic;
-    uint8_t qosLevel;
+    QoSType qosLevel;
 };
 
 struct ConnectOptions {
@@ -60,6 +66,7 @@ struct PublishPacket {
     FixedHeader fixedHeader;
     uint16_t topicLength;
     std::string topic;
+    std::string message;
     // Quality of Service (QoS), Retain Flag, Message Identifier, and Payload
     // ...
 
