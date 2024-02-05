@@ -42,11 +42,20 @@ public:
         return payload_length_;
     }
 
-    std::vector<char> payload_;
+    uint16_t& lastMessageId() {
+        return lastMessageId_;
+    }
+
+    int sessionId() {
+        return sessionId_;
+    }
+
 private:
     boost::asio::ip::tcp::socket socket_;
     std::vector<SubscriptionOptions> subscribedTopics_;
+    std::vector<char> payload_;
     std::vector<char> header_;
     std::size_t payload_length_;
     int sessionId_;
+    uint16_t lastMessageId_ = 0;
 };

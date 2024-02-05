@@ -54,12 +54,30 @@ public:
             options = { topic, qosLevel }; // should convert to vector to handle multiple topics
         }
         return options;
+        // Ensure the packet is a SUBSCRIBE packet (assuming it is well-formed)
     }
 
     PublishPacket parsePublish(std::vector<char> data) {
-        PublishPacket packet;
+        // Assuming 'data' is the received PUBLISH packet
+        PublishPacket publishPacket;
 
-        return packet;
+        // Extract the QoS level from the fixed header
+        publishPacket.qos = (data[0] & 0x06) >> 1;
+
+        // Extract the topic length from the variable header
+        uint16_t topicLength = data[1];
+
+        // Extract the topic name from the variable header
+        for (uint16_t i = 0; i < topicLength; ++i) {
+            publishPacket.topic.push_back(static_cast<char>(data[i]));
+        }
+
+        // Extract the payload from the packet
+        for (size_t i = 4 + topicLength; i < data.size(); ++i) {
+            publishPacket.payload.push_back(static_cast<char>(data[i]));
+        }
+
+        return publishPacket;
     }
 
     /*std::string toString() {

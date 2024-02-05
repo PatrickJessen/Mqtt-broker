@@ -32,7 +32,6 @@ void MqttServer::readHeader(std::shared_ptr<MqttClient> client)
                 {
                 case 1:
                 {
-                    sendConnack(client);
                     type = PacketType::CONNECT;
                     break;
                 }
@@ -46,11 +45,24 @@ void MqttServer::readHeader(std::shared_ptr<MqttClient> client)
                     type = PacketType::PUBLISH;
                     break;
                 }
+                case 14:
+                {
+                    type = PacketType::DISCONNECT;
+                    handleClientDisconnect(client);
+                    break;
+                }
+                case 12:
+                {
+                    type = PacketType::PINGREQ;
+                    std::cout << "Received Ping\n";
+                    break;
+                }
                 default:
                     break;
                 }
-                
-                readPayload(client);
+                if (type != PacketType::DISCONNECT && type != PacketType::PINGREQ) {
+                    readPayload(client);
+                }
             }
             else {
                 std::cerr << "Read error: " << ec.message() << std::endl;
@@ -59,17 +71,22 @@ void MqttServer::readHeader(std::shared_ptr<MqttClient> client)
         });
 }
 
-void MqttServer::sendSuback(std::shared_ptr<MqttClient> client)
+void MqttServer::sendSuback(std::shared_ptr<MqttClient> client, uint8_t msgId)
 {
-    uint16_t packetIdentifier = 1234;
-    std::vector<uint8_t> qosLevels = { 0x00, 0x01 };
-    // Construct SUBACK packet
-    std::vector<uint8_t> subackPacket;
-    subackPacket.push_back(0x90);  // Fixed Header
-    subackPacket.push_back(packetIdentifier >> 8);  // MSB of Packet Identifier
-    subackPacket.push_back(packetIdentifier & 0xFF);  // LSB of Packet Identifier
-    subackPacket.insert(subackPacket.end(), qosLevels.begin(), qosLevels.end());  // QoS Levels
+    client->lastMessageId()++;
+    std::vector<uint8_t> qosLevels = { 0x00, 0x01, 0x02 };
+    std::vector<char> subackPacket;
+    subackPacket.push_back(0x90); // Fixed Header: SUBACK
+    subackPacket.push_back(0x03); // Remaining Length
+    subackPacket.push_back(static_cast<uint8_t>(client->lastMessageId() >> 8)); // Message Identifier (MSB)
+    subackPacket.push_back(static_cast<uint8_t>(client->lastMessageId() & 0xFF)); // Message Identifier (LSB)
     subackPacket.push_back(0x00);
+
+    std::cout << "Suback: ";
+    for (const char& c : subackPacket) {
+        std::cout << static_cast<int>(static_cast<unsigned char>(c)) << " ";
+    }
+    std::cout << std::endl;
 
     // Send SUBACK packet
     boost::asio::async_write(client->socket(), boost::asio::buffer(subackPacket.data(), subackPacket.size()),
@@ -81,9 +98,6 @@ void MqttServer::sendSuback(std::shared_ptr<MqttClient> client)
                 std::cout << "Send SUBACK to client\n";
             }
         });
-    //boost::asio::write(client->socket(), boost::asio::buffer(subackPacket));
-    //const char connackPacket[] = { 0x00 };
-    //boost::asio::write(client->socket(), boost::asio::buffer(connackPacket, sizeof(connackPacket)));
 }
 
 void MqttServer::sendConnack(std::shared_ptr<MqttClient> client)
@@ -107,10 +121,6 @@ void MqttServer::readPayload(std::shared_ptr<MqttClient> client)
         boost::asio::async_read(client->socket(), boost::asio::buffer(client->payload(), client->payloadLength()),
             [this, client](boost::system::error_code ec, std::size_t length) {
                 if (!ec) {
-                    std::cout << "Received buffer (raw): ";
-                    for (std::size_t i = 0; i < length; ++i) {
-                        std::cout << static_cast<int>(client->payload()[i]) << " ";
-                    }
                     std::cout << std::endl;
                     processPayload(client, length);
                     readHeader(client);
@@ -131,25 +141,48 @@ void MqttServer::handleMqttMessage(std::shared_ptr<MqttClient> client, const std
 void MqttServer::handleMqttPublish(std::shared_ptr<MqttClient> sender, const std::string& topic, const std::string& publishMessage)
 {
     std::vector<uint8_t> testpacket;
-    testpacket.push_back(0x30);  // Packet Type: Publish with QoS 0
-    testpacket.push_back(static_cast<uint8_t>(topic.size() >> 8));  // MSB of topic length
-    testpacket.push_back(static_cast<uint8_t>(topic.size() & 0xFF));  // LSB of topic length
+
+    // Packet Type: Publish with QoS 0
+    testpacket.push_back(0x30);
+
+    // Calculate the length of the topic and payload
+    uint16_t topicLength = topic.size();
+    uint16_t payloadLength = publishMessage.size() +1;
+    // MSB of topic length
+    testpacket.push_back(payloadLength + topicLength);
+    // LSB of topic length
+    testpacket.push_back(0x00);
+    testpacket.push_back(static_cast<uint8_t>(topicLength & 0xFF));
+
     // Append topic bytes to the packet
     for (char c : topic) {
         testpacket.push_back(static_cast<uint8_t>(c));
     }
+
     // Append payload bytes to the packet
     for (char c : publishMessage) {
         testpacket.push_back(static_cast<uint8_t>(c));
     }
-    testpacket.push_back(0x00);
 
-    //const char f[] = { 0x82, 0x0E, 0x00, 0x01, 0x00, 0x04, 0x74, 0x65, 0x73, 0x74, 0x00, 0x01 };
+    std::cout << "Publish: ";
+    for (const char& c : testpacket) {
+        std::cout << static_cast<int>(static_cast<unsigned char>(c)) << " ";
+    }
+    std::cout << std::endl;
+
+    // MQTT PUBLISH packet example (QoS 0)
+    std::vector<uint8_t> publishPacket = {
+        0x30,       // Fixed Header: PUBLISH, QoS 0, retain flag 0
+        0x0F +2,       // Remaining Length
+        0x00, 0x04, // Topic Length (4 bytes)
+        't', 'e', 's', 't', // Topic: "test"
+        'H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!' // Message: "Hello world!"
+    };
     // Send the Publish packet
     for (const auto& client : clients_) {
         if (client != sender) {
-            for (int i = 0; i < client->subscribedTopics().size(); i++) {
-                if (client->subscribedTopics()[i].topic == topic) {
+            for (const auto& subscription : client->subscribedTopics()) {
+                if (subscription.topic == topic) {
                     boost::asio::async_write(client->socket(), boost::asio::buffer(testpacket.data(), testpacket.size()),
                         [client](boost::system::error_code ec, std::size_t /*length*/) {
                             if (ec) {
@@ -168,7 +201,7 @@ void MqttServer::handleMqttPublish(std::shared_ptr<MqttClient> sender, const std
 void MqttServer::handleClientDisconnect(std::shared_ptr<MqttClient> client)
 {
     clients_.erase(client);
-    std::cout << "Client disconnected." << std::endl;
+    std::cout << "Client " << client->sessionId() << " disconnected." << std::endl;
 }
 
 void MqttServer::processHeader(std::shared_ptr<MqttClient> client, const std::size_t& length)
@@ -215,27 +248,25 @@ void MqttServer::processPayload(std::shared_ptr<MqttClient> client, const std::s
         // Check if it's an MQTT Connect packet
         if (type == PacketType::CONNECT) {
             //received_data[0] = 0x10; // hardcode Connect because its not getting it from the header_ for some reason..
-            std::cout << "Received MQTT CONNECT packet" << std::endl;
+            sendConnack(client);
             connectPacket = parser.parseConnect();
             //std::string parserStr = parser->toString();
             //std::cout << parserStr << "\n";
         }
         else if (type == PacketType::SUBSCRIBE) {
-            std::cout << "Received SUBSCRIBE packet\n";
             subscribePacket = parser.parseSubscription(received_data);
             client->subscribe(subscribePacket);
-            //subscribePacket = parser.parseSubscription();
+            uint16_t messageId = (received_data[3] << 8) + received_data[4];
             std::cout << "Topic: " << subscribePacket.topic << " QoS: " << (int)subscribePacket.qosLevel << "\n";
-            sendSuback(client);
+            sendSuback(client, messageId);
             /*for (const auto& subscription : subscriptions) {
                 std::cout << "Topic: " << subscription.topic << ", QoS: " << static_cast<int>(subscription.qosLevel) << std::endl;
             }*/
 
         }
         else if (type == PacketType::PUBLISH) {
-            std::cout << "Received PUBLISH packet\n";
-            publishPacket = parser.parsePublish(received_data);
-            handleMqttPublish(client, "test", "hello");
+            publishPacket = parser.parsePublish(received_data); // Fix publish parser!
+            handleMqttPublish(client, publishPacket.topic, publishPacket.payload);
         }
         else {
             std::cerr << "Unknown data: ";

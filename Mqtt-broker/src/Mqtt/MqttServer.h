@@ -16,7 +16,7 @@ private:
 
     void readHeader(std::shared_ptr<MqttClient> client);
 
-    void sendSuback(std::shared_ptr<MqttClient> client);
+    void sendSuback(std::shared_ptr<MqttClient> client, uint8_t msgId);
 
     void sendConnack(std::shared_ptr<MqttClient> client);
 

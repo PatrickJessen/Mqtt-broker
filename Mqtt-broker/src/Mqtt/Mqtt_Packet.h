@@ -63,14 +63,9 @@ struct ConnectOptions {
 
 // MQTT Publish Packet
 struct PublishPacket {
-    FixedHeader fixedHeader;
-    uint16_t topicLength;
+    uint8_t qos;
     std::string topic;
-    std::string message;
-    // Quality of Service (QoS), Retain Flag, Message Identifier, and Payload
-    // ...
-
-    // Additional fields for QoS handling
+    std::string payload;
 };
 
 // MQTT Subscription Packet
