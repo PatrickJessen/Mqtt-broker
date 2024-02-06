@@ -311,7 +311,7 @@ bool MqttServer::processPayload(std::shared_ptr<MqttClient> client, const std::s
 
 void MqttServer::startKeepAlive(std::shared_ptr<MqttClient> client)
 {
-    /*try
+    try
     {
         while (client->clientInformation().keepAlive > 0)
         {
@@ -323,7 +323,7 @@ void MqttServer::startKeepAlive(std::shared_ptr<MqttClient> client)
     catch (std::exception e)
     {
         handleClientDisconnect(client);
-    }*/
+    }
 }
 
 bool MqttServer::handleConnectPacket(std::shared_ptr<MqttClient> client, MqttParser parser)
@@ -338,11 +338,11 @@ bool MqttServer::handleConnectPacket(std::shared_ptr<MqttClient> client, MqttPar
     client->clientInformation() = { connectPacket.clientId, connectPacket.username, connectPacket.password, connectPacket.keepAlive };
     connectPacket.print();
     int clientId = client->sessionId();
-    /*if (client) {
+    if (client) {
         threadPool.push_back({ std::thread([&]() {
             startKeepAlive(client);
             }), clientId });
-    }*/
+    }
     return SUCCESS;
 }
 
