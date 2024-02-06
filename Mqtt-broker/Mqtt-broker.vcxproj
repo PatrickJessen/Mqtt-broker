@@ -131,12 +131,11 @@
   <ItemGroup>
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Mqtt\MqttClient.cpp" />
+    <ClCompile Include="src\Mqtt\MqttParser.cpp" />
     <ClCompile Include="src\Mqtt\MqttServer.cpp" />
     <ClCompile Include="src\UnitTest.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\interfaces\IServer.h" />
-    <ClInclude Include="src\interfaces\ISession.h" />
     <ClInclude Include="src\Mqtt\MqttClient.h" />
     <ClInclude Include="src\Mqtt\MqttParser.h" />
     <ClInclude Include="src\Mqtt\MqttServer.h" />

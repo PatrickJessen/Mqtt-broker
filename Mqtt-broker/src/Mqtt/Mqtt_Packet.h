@@ -80,14 +80,6 @@ struct PublishPacket {
     std::string payload;
 };
 
-// MQTT Subscription Packet
-struct SubscribePacket {
-    FixedHeader fixedHeader;
-    // Packet Identifier
-    // List of Topic Filters and corresponding QoS levels
-    // ...
-};
-
 struct ClientInformation {
     std::string clientId;
     std::string username;

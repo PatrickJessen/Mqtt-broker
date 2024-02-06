@@ -119,11 +119,13 @@ bool MqttServer::sendConnack(std::shared_ptr<MqttClient> client, bool canConnect
 {
     try {
         if (canConnect) {
+            // Send connection successfull packet
             const char connackPacket[] = { 0x20, 0x02, 0x00, 0x00 };
             boost::asio::write(client->socket(), boost::asio::buffer(connackPacket, sizeof(connackPacket)));
             std::cout << "Send CONNACK to " << client->clientInformation().clientId << "\n";
             return SUCCESS;
         }
+        // Send connection denied packet (code 5)
         const char connackPacket[] = { 0x20, 0x02, 0x00, 0x05 };
         boost::asio::write(client->socket(), boost::asio::buffer(connackPacket, sizeof(connackPacket)));
         std::cout << "Send CONNACK to " << client->clientInformation().clientId << "\n";
@@ -181,7 +183,7 @@ bool MqttServer::handleMqttPublish(std::shared_ptr<MqttClient> sender)
     std::vector<uint8_t> packetVec;
 
     // QoS level
-    packetVec.push_back(publishPacket.qos);
+    packetVec.push_back(0x30);
 
     uint16_t topicLength = publishPacket.topic.size();
     uint16_t payloadLength = publishPacket.payload.size();
@@ -200,6 +202,15 @@ bool MqttServer::handleMqttPublish(std::shared_ptr<MqttClient> sender)
     for (char c : publishPacket.payload) {
         packetVec.push_back(static_cast<uint8_t>(c));
     }
+
+    // MQTT PUBLISH packet example (QoS 0)
+    std::vector<uint8_t> test = {
+        0x30,       // Fixed Header: PUBLISH, QoS 0, retain flag 0
+        0x0F + 2,       // Remaining Length
+        0x00, 0x04, // Topic Length (4 bytes)
+        't', 'e', 's', 't', // Topic: "test"
+        'H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd', '!' // Message: "Hello world!"
+    };
 
     // Send the Publish packet
     for (const auto& client : clients_) {
@@ -300,12 +311,19 @@ bool MqttServer::processPayload(std::shared_ptr<MqttClient> client, const std::s
 
 void MqttServer::startKeepAlive(std::shared_ptr<MqttClient> client)
 {
-    while (client->clientInformation().keepAlive > 0)
+    /*try
     {
-        Sleep(1000);
-        client->clientInformation().keepAlive--;
+        while (client->clientInformation().keepAlive > 0)
+        {
+            Sleep(1000);
+            client->clientInformation().keepAlive--;
+        }
+        handleClientDisconnect(client);
     }
-    handleClientDisconnect(client);
+    catch (std::exception e)
+    {
+        handleClientDisconnect(client);
+    }*/
 }
 
 bool MqttServer::handleConnectPacket(std::shared_ptr<MqttClient> client, MqttParser parser)
@@ -320,9 +338,11 @@ bool MqttServer::handleConnectPacket(std::shared_ptr<MqttClient> client, MqttPar
     client->clientInformation() = { connectPacket.clientId, connectPacket.username, connectPacket.password, connectPacket.keepAlive };
     connectPacket.print();
     int clientId = client->sessionId();
-    threadPool.push_back({ std::thread([&]() {
-        startKeepAlive(client);
-        }), clientId });
+    /*if (client) {
+        threadPool.push_back({ std::thread([&]() {
+            startKeepAlive(client);
+            }), clientId });
+    }*/
     return SUCCESS;
 }
 

@@ -24,24 +24,27 @@
     <ClCompile Include="src\Mqtt\MqttClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\UnitTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mqtt\MqttParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\interfaces\IServer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\interfaces\ISession.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Mqtt\Mqtt_Packet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Mqtt\MqttConnectParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Mqtt\MqttClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Mqtt\MqttServer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mqtt\MqttParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\UnitTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

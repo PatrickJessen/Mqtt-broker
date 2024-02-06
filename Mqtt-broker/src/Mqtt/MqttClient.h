@@ -8,51 +8,27 @@
 class MqttClient 
 {
 public:
-    MqttClient(boost::asio::ip::tcp::socket socket, int sessionId)
-        : socket_(std::move(socket)), sessionId_(sessionId), subscribedTopics_() 
-    {
-        header_ = std::vector<char>(2);
-    }
+    MqttClient(boost::asio::ip::tcp::socket socket, int sessionId);
 
-    boost::asio::ip::tcp::socket& socket() {
-        return socket_;
-    }
+    boost::asio::ip::tcp::socket& socket();
 
-    const std::vector<SubscriptionOptions>& subscribedTopics() const {
-        return subscribedTopics_;
-    }
+    const std::vector<SubscriptionOptions>& subscribedTopics() const;
 
-    void subscribe(const SubscriptionOptions& topic) {
-        subscribedTopics_.push_back(topic);
-    }
+    void subscribe(const SubscriptionOptions& topic);
 
-    void unsubscribe(const SubscriptionOptions& topic) {
-        //subscribedTopics_.erase(topic);
-    }
+    void unsubscribe(const SubscriptionOptions& topic);
 
-    std::vector<char>& payload() {
-        return payload_;
-    }
+    std::vector<char>& payload();
 
-    std::vector<char>& header() {
-        return header_;
-    }
+    std::vector<char>& header();
 
-    std::size_t& payloadLength() {
-        return payload_length_;
-    }
+    std::size_t& payloadLength();
 
-    uint16_t& lastMessageId() {
-        return lastMessageId_;
-    }
+    uint16_t& lastMessageId();
 
-    int sessionId() {
-        return sessionId_;
-    }
+    const int& sessionId() const;
 
-    ClientInformation& clientInformation() {
-        return info;
-    }
+    ClientInformation& clientInformation();
 
 private:
     boost::asio::ip::tcp::socket socket_;
