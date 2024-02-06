@@ -3,6 +3,8 @@
 #include <vector>
 #include "Mqtt_Packet.h"
 
+
+// Should be refactored
 class MqttParser {
 public:
     MqttParser(const std::vector<char>& data) : data_(data), index_(0) 
@@ -11,7 +13,6 @@ public:
 
     ConnectOptions parseConnect() 
     {
-
         ConnectOptions options;
         options.packetType = readByte();
         options.protocolNameLength = readByte();
@@ -28,25 +29,25 @@ public:
         return options;
     }
 
-    SubscriptionOptions parseSubscription(std::vector<char> data) 
+    SubscriptionOptions parseSubscription() 
     {
         SubscriptionOptions options;
         size_t offset = 2; // Start of variable header
-        uint16_t packetIdentifier = (data[offset] << 8) | data[offset + 1];
+        uint16_t packetIdentifier = (data_[offset] << 8) | data_[offset + 1];
         offset += 2;
 
-        while (offset < data.size()) {
+        while (offset < data_.size()) {
             // Extract the Topic Filter
             std::string topic;
-            while (data[offset] != 0x00 && offset < data.size()) {
-                topic += static_cast<char>(data[offset]);
+            while (data_[offset] != 0x00 && offset < data_.size()) {
+                topic += static_cast<char>(data_[offset]);
                 offset++;
             }
-            if (offset +1 < data.size()) {
+            if (offset +1 < data_.size()) {
                 offset++; // Move past the null character
             }
             QoSType qosLevel;
-            uint8_t qos = data[offset] & 0x03;
+            uint8_t qos = data_[offset] & 0x03;
             qosLevel = (QoSType)qos;
             // Extract QoS Level
             offset++;
@@ -57,38 +58,28 @@ public:
         // Ensure the packet is a SUBSCRIBE packet (assuming it is well-formed)
     }
 
-    PublishPacket parsePublish(std::vector<char> data) {
+    PublishPacket parsePublish() {
         // Assuming 'data' is the received PUBLISH packet
         PublishPacket publishPacket;
 
         // Extract the QoS level from the fixed header
-        publishPacket.qos = (data[0] & 0x06) >> 1;
+        publishPacket.qos = data_[0];
 
         // Extract the topic length from the variable header
-        uint16_t topicLength = data[1];
-
+        uint16_t topicLength = data_[1];
+        uint16_t topicStart = 2;
         // Extract the topic name from the variable header
-        for (uint16_t i = 0; i < topicLength; ++i) {
-            publishPacket.topic.push_back(static_cast<char>(data[i]));
+        for (uint16_t i = topicStart; i < topicLength + topicStart; ++i) {
+            publishPacket.topic.push_back(static_cast<char>(data_[i]));
         }
 
         // Extract the payload from the packet
-        for (size_t i = 4 + topicLength; i < data.size(); ++i) {
-            publishPacket.payload.push_back(static_cast<char>(data[i]));
+        for (size_t i = 2 + topicLength; i < data_.size(); ++i) {
+            publishPacket.payload.push_back(static_cast<char>(data_[i]));
         }
 
         return publishPacket;
     }
-
-    /*std::string toString() {
-        std::string str = "Packet type: ";
-        str.append(std::to_string(options->packetType) + "\nProtocol name: " + options->protocolName + "\n" +
-                                "Protocol level : " + std::to_string(options->protocolLevel) + "\nConnect flags : " + std::to_string(options->connectFlags)
-                                + "\nKeep alive: " + std::to_string(options->keepAlive) + "\nClient id: " + options->clientId + "\nWill topic: "
-                                + options->willTopic + "\nWill message: " + options->willMessage + "\nUsername: " + options->username + "\nPassword: "
-                                + options->password);
-        return str;
-    }*/
 private:
     uint8_t readByte() 
     {

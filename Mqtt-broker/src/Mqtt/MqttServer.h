@@ -1,6 +1,17 @@
 #pragma once
 #include "MqttClient.h"
 #include "Mqtt_Packet.h"
+#include "MqttParser.h"
+
+struct Thread {
+    std::thread thread;
+    int id;
+};
+
+enum {
+    FAIL = 0,
+    SUCCESS = 1
+};
 
 class MqttServer {
 public:
@@ -16,22 +27,29 @@ private:
 
     void readHeader(std::shared_ptr<MqttClient> client);
 
-    void sendSuback(std::shared_ptr<MqttClient> client, uint8_t msgId);
+    bool sendSuback(std::shared_ptr<MqttClient> client);
 
-    void sendConnack(std::shared_ptr<MqttClient> client);
+    bool sendConnack(std::shared_ptr<MqttClient> client, bool canConnect);
+
+    bool sendPingResponse(std::shared_ptr<MqttClient> client);
 
     void readPayload(std::shared_ptr<MqttClient> client);
 
-    void handleMqttMessage(std::shared_ptr<MqttClient> client, const std::string& message);
+    bool handleMqttPublish(std::shared_ptr<MqttClient> sender);
 
-    void handleMqttPublish(std::shared_ptr<MqttClient> sender, const std::string& topic, const std::string& publishMessage);
+    bool handleClientDisconnect(std::shared_ptr<MqttClient> client);
 
-    void handleClientDisconnect(std::shared_ptr<MqttClient> client);
+    bool processHeader(std::shared_ptr<MqttClient> client, const std::size_t& length);
 
-    void processHeader(std::shared_ptr<MqttClient> client, const std::size_t& length);
+    bool processPayload(std::shared_ptr<MqttClient> client, const std::size_t& length);
 
-    void processPayload(std::shared_ptr<MqttClient> client, const std::size_t& length);
+    void startKeepAlive(std::shared_ptr<MqttClient> client);
 
+    bool handleConnectPacket(std::shared_ptr<MqttClient> client, MqttParser parser);
+
+    bool handleSubscribePacket(std::shared_ptr<MqttClient> client, MqttParser parser);
+
+    bool handlePublishPacket(std::shared_ptr<MqttClient> client, MqttParser parser);
 private:
     boost::asio::ip::tcp::acceptor acceptor_;
     boost::asio::ip::tcp::socket socket_;
@@ -41,4 +59,6 @@ private:
     SubscriptionOptions subscribePacket;
     PublishPacket publishPacket;
     int nextId = 0;
+    std::vector<Thread> threadPool;
+    friend class ServerUnitTest;
 };

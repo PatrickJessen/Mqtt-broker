@@ -132,6 +132,7 @@
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Mqtt\MqttClient.cpp" />
     <ClCompile Include="src\Mqtt\MqttServer.cpp" />
+    <ClCompile Include="src\UnitTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\interfaces\IServer.h" />
@@ -140,6 +141,7 @@
     <ClInclude Include="src\Mqtt\MqttParser.h" />
     <ClInclude Include="src\Mqtt\MqttServer.h" />
     <ClInclude Include="src\Mqtt\Mqtt_Packet.h" />
+    <ClInclude Include="src\UnitTest.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

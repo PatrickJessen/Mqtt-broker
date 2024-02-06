@@ -58,6 +58,18 @@ struct ConnectOptions {
     std::string willMessage;
     std::string username;
     std::string password;
+
+    void print()
+    {
+        std::string str = "Packet type: ";
+        str.append(std::to_string(packetType) + "\nProtocol name: " + protocolName + "\n" +
+            "Protocol level : " + std::to_string(protocolLevel) + "\nConnect flags : " + std::to_string(connectFlags)
+            + "\nKeep alive: " + std::to_string(keepAlive) + "\nClient id: " + clientId + "\nWill topic: "
+            + willTopic + "\nWill message: " + willMessage + "\nUsername: " + username + "\nPassword: "
+            + password);
+
+        std::cout << str << "\n";
+    }
 };
 
 
@@ -74,4 +86,11 @@ struct SubscribePacket {
     // Packet Identifier
     // List of Topic Filters and corresponding QoS levels
     // ...
+};
+
+struct ClientInformation {
+    std::string clientId;
+    std::string username;
+    std::string password;
+    uint16_t keepAlive;
 };

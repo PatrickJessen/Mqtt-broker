@@ -50,6 +50,10 @@ public:
         return sessionId_;
     }
 
+    ClientInformation& clientInformation() {
+        return info;
+    }
+
 private:
     boost::asio::ip::tcp::socket socket_;
     std::vector<SubscriptionOptions> subscribedTopics_;
@@ -58,4 +62,5 @@ private:
     std::size_t payload_length_;
     int sessionId_;
     uint16_t lastMessageId_ = 0;
+    ClientInformation info;
 };
