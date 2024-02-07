@@ -84,5 +84,6 @@ struct ClientInformation {
     std::string clientId;
     std::string username;
     std::string password;
-    uint16_t keepAlive;
+    int keepAlive;
+    int timeToDisconnect;
 };

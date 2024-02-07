@@ -14,28 +14,19 @@ ConnectOptions MqttParser::parseConnect()
     options.protocolLevel = readByte();
     options.connectFlags = readByte();
     options.keepAlive = readUint16();
-    int timesDataIsZero = 0;
-    for (int i = index_; i < data_.size(); i++) {
-        if (data_[i] == 0) {
-            timesDataIsZero++;
-        }
-        else {
-            break;
-        }
+    options.clientId = readString(readUint16());
+
+    // Should handle this in a better way
+    if (options.connectFlags == 192 || options.connectFlags == 194) {
+        options.username = readString(readUint16());
+        options.password = readString(readUint16());
     }
-    if (timesDataIsZero == 0) {
-        options.clientId = readString(readUint16());
-    }
-    if (timesDataIsZero == 1) {
+    else if (options.connectFlags == 198) {
         options.willTopic = readString(readUint16());
-    }
-    if (timesDataIsZero == 2) {
         options.willMessage = readString(readUint16());
+        options.username = readString(readUint16());
+        options.password = readString(readUint16());
     }
-    // timesDataIsZero will never be higher than 2 because username and password is a must
-    index_ += timesDataIsZero -1;
-    options.username = readString(readUint16());
-    options.password = readString(readUint16());
 
     return options;
 }
