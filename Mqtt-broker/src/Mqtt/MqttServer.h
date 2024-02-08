@@ -23,9 +23,11 @@ private:
 
     bool sendPingResponse(std::shared_ptr<MqttClient> client);
 
+    bool sendPuback(std::shared_ptr<MqttClient> client);
+
     void readPayload(std::shared_ptr<MqttClient> client);
 
-    bool handleMqttPublish(std::shared_ptr<MqttClient> sender);
+    bool handleMqttPublish(std::shared_ptr<MqttClient> client);
 
     bool handleClientDisconnect(std::shared_ptr<MqttClient> client);
 
@@ -42,6 +44,8 @@ private:
     bool handlePublishPacket(std::shared_ptr<MqttClient> client, MqttParser parser);
 
     void generateClientId(std::string& clientId);
+
+    void handleQoS(std::shared_ptr<MqttClient> client, const int& qos);
 private:
     boost::asio::ip::tcp::acceptor acceptor_;
     boost::asio::ip::tcp::socket socket_;

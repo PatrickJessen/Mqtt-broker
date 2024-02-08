@@ -15,6 +15,7 @@ void MqttServer::startAccept()
     auto newClient = std::make_shared<MqttClient>(std::move(socket_), nextId);
     try
     {
+        // Accept new client
         acceptor_.async_accept(newClient->socket(),
             [this, newClient](boost::system::error_code ec) {
                 if (!ec) {
@@ -93,7 +94,7 @@ void MqttServer::readHeader(std::shared_ptr<MqttClient> client)
                 else {
                     std::cerr << "Read error: " << ec.message() << std::endl;
                     handleClientDisconnect(client);
-                    readHeader(client);
+                    //readHeader(client);
                 }
             });
     }
@@ -159,7 +160,21 @@ bool MqttServer::sendPingResponse(std::shared_ptr<MqttClient> client)
         return SUCCESS;
     }
     catch (const std::exception& e) {
-        std::cerr << "Exception during Connack packet send: " << e.what() << std::endl;
+        std::cerr << "Exception during PINGRESP packet send: " << e.what() << std::endl;
+        return FAIL;
+    }
+}
+
+bool MqttServer::sendPuback(std::shared_ptr<MqttClient> client)
+{
+    try {
+        const char puback[] = { 0x40, 0x02, 0x040, 0x02};
+        boost::asio::write(client->socket(), boost::asio::buffer(puback, sizeof(puback)));
+        std::cout << "Send PUBACK to " << client->clientInformation().clientId << "\n";
+        return SUCCESS;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Exception during PUBACK packet send: " << e.what() << std::endl;
         return FAIL;
     }
 }
@@ -191,12 +206,12 @@ void MqttServer::readPayload(std::shared_ptr<MqttClient> client)
     }
 }
 
-bool MqttServer::handleMqttPublish(std::shared_ptr<MqttClient> sender)
+bool MqttServer::handleMqttPublish(std::shared_ptr<MqttClient> client)
 {
     std::vector<uint8_t> packetVec;
 
     // QoS level
-    packetVec.push_back(0x30);
+    packetVec.push_back(publishPacket.qos);
 
     uint16_t topicLength = publishPacket.topic.size();
     uint16_t payloadLength = publishPacket.payload.size();
@@ -217,18 +232,18 @@ bool MqttServer::handleMqttPublish(std::shared_ptr<MqttClient> sender)
     }
 
     // Send the Publish packet
-    for (const auto& client : clients_) {
-        if (client != sender) {
-            for (const auto& subscription : client->subscribedTopics()) {
+    for (const auto& c : clients_) {
+        if (c != client) {
+            for (const auto& subscription : c->subscribedTopics()) {
                 if (subscription.topic == publishPacket.topic) {
-                    boost::asio::async_write(client->socket(), boost::asio::buffer(packetVec.data(), packetVec.size()),
-                        [client](boost::system::error_code ec, std::size_t /*length*/) {
+                    boost::asio::async_write(c->socket(), boost::asio::buffer(packetVec.data(), packetVec.size()),
+                        [c](boost::system::error_code ec, std::size_t /*length*/) {
                             if (ec) {
-                                std::cerr << "Write error to " << client->clientInformation().clientId << " " << ec.message() << std::endl;
+                                std::cerr << "Write error to " << c->clientInformation().clientId << " " << ec.message() << std::endl;
                                 return FAIL;
                             }
                             else {
-                                std::cout << "Message sent to " << client->clientInformation().clientId << "\n";
+                                std::cout << "Message sent to " << c->clientInformation().clientId << "\n";
                             }
                         });
                 }
@@ -259,7 +274,7 @@ bool MqttServer::handleClientDisconnect(std::shared_ptr<MqttClient> client)
 
 bool MqttServer::processHeader(std::shared_ptr<MqttClient> client, const std::size_t& length)
 {
-    // Extract payload length from the fixed header
+    // Get the payload length from the fixed header
     if (length >= 2) {
         client->payloadLength() = 0;
         uint8_t multiplier = 1;
@@ -319,7 +334,6 @@ void MqttServer::startKeepAlive()
         for (int i = 0; i < clients_.size(); i++) {
             if (clients_[i]->clientInformation().timeToDisconnect > 0) {
                 clients_[i]->clientInformation().timeToDisconnect--;
-                //std::cout << "ClientId: " << clients_[i]->sessionId() << " Keep alive: " << clients_[i]->clientInformation().timeToDisconnect << "\n";
             }
             else {
                 if (type != PacketType::PINGRESP && clients_[i]->clientInformation().keepAlive != 0) {
@@ -375,6 +389,8 @@ bool MqttServer::handleSubscribePacket(std::shared_ptr<MqttClient> client, MqttP
 bool MqttServer::handlePublishPacket(std::shared_ptr<MqttClient> client, MqttParser parser)
 {
     publishPacket = parser.parsePublish();
+    publishPacket.qos = client->header()[0];
+    handleQoS(client, publishPacket.qos);
     handleMqttPublish(client);
     return SUCCESS;
 }
@@ -384,5 +400,15 @@ void MqttServer::generateClientId(std::string& clientId)
     std::string availableChars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     for (int i = 0; i < 22; i++) {
         clientId += availableChars[rand() % availableChars.size()];
+    }
+}
+
+void MqttServer::handleQoS(std::shared_ptr<MqttClient> client, const int& qos)
+{
+    if (qos == (int)QoSType::QOS1) {
+        sendPuback(client);
+    }
+    else if (qos == (int)QoSType::QOS2) {
+
     }
 }

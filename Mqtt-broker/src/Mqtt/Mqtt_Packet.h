@@ -30,9 +30,9 @@ enum ConnectFlags : uint8_t {
 };
 
 enum class QoSType {
-    QOS0 = 0,
-    QOS1 = 1,
-    QOS2 = 2
+    QOS0 = 0x30,
+    QOS1 = 0x32,
+    QOS2 = 0x34
 };
 
 // MQTT Fixed Header

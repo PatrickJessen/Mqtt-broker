@@ -16,7 +16,7 @@ ConnectOptions MqttParser::parseConnect()
     options.keepAlive = readUint16();
     options.clientId = readString(readUint16());
 
-    // Should handle this in a better way
+    // Should handle this in a better way (abit of a hack)
     if (options.connectFlags == 192 || options.connectFlags == 194) {
         options.username = readString(readUint16());
         options.password = readString(readUint16());
@@ -50,18 +50,24 @@ SubscriptionOptions MqttParser::parseSubscription()
         }
         QoSType qosLevel;
         uint8_t qos = data_[offset] & 0x03;
-        qosLevel = (QoSType)qos;
+        if (qos == 0) {
+            qosLevel = QoSType::QOS0;
+        }
+        else if (qos == 1) {
+            qosLevel = QoSType::QOS1;
+        }
+        else if (qos == 2) {
+            qosLevel = QoSType::QOS2;
+        }
         // Extract QoS Level
         offset++;
 
         options = { topic, qosLevel }; // should convert to vector to handle multiple topics
     }
     return options;
-    // Ensure the packet is a SUBSCRIBE packet (assuming it is well-formed)
 }
 
 PublishPacket MqttParser::parsePublish() {
-    // Assuming 'data' is the received PUBLISH packet
     PublishPacket publishPacket;
 
     // Extract the QoS level from the fixed header
@@ -93,6 +99,7 @@ uint8_t MqttParser::readByte()
 
 uint16_t MqttParser::readUint16()
 {
+    // Extract the value by left shifting 8 to readByte and performing or bitwise operation
     uint16_t value = (static_cast<uint16_t>(readByte()) << 8) | static_cast<uint16_t>(readByte());
     return value;
 }

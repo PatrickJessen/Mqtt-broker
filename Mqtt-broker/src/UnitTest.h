@@ -17,9 +17,9 @@ public:
     void Run();
 
 private:
-    void parseConnect();
-    void parseSubscription();
-    void parsePublish();
+    void Test_parseConnect();
+    void Test_parseSubscription();
+    void Test_parsePublish();
 
 private:
     std::vector<TestResult> testResults;

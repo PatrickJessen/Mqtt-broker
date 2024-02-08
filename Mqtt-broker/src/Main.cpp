@@ -1,7 +1,7 @@
 #include "Mqtt/MqttServer.h"
 #include "UnitTest.h"
 
-static bool enableUnitTest = false;
+static bool enableUnitTest = true;
 int main()
 {
     try {
